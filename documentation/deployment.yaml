@@ -1,4 +1,4 @@
-# deployment.yaml
+# deployment.yaml for ADO pipeline (rough draft / needs testing)
 
 trigger:
 - main  # Change this based on your default branch
