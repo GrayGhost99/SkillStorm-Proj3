@@ -1,0 +1,57 @@
+# deployment.yaml
+
+trigger:
+- main  # Change this based on your default branch
+
+variables:
+  azureSubscription: 'MyAzureServiceConnection'  # Define the variable here
+  acrName: 'AKSCR1mmoore.azurecr.io'
+  imageName: 'samples/nginx'
+  kubernetesCluster: 'your-aks-cluster-name'
+  resourceGroup: 'your-resource-group-name'
+  deploymentFile: 'acr-nginx.yaml'
+  dockerImage: 'nginx:latest'
+
+stages:
+- stage: BuildAndDeploy
+  displayName: 'Build, Push to ACR, and Deploy to AKS'
+  jobs:
+  - job: BuildAndDeploy
+    displayName: 'Build and Deploy to AKS'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: AzureCLI@2
+      displayName: 'Azure CLI - Setup and Login to ACR/AKS'
+      inputs:
+        azureSubscription: $(azureSubscription)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          # Get AKS credentials for kubectl to interact with AKS
+          az aks get-credentials --resource-group $(resourceGroup) --name $(kubernetesCluster)
+
+          # Log in to ACR
+          az acr login --name $(acrName)
+
+    - task: AzureCLI@2
+      displayName: 'Pull, Push and Deploy Nginx Image to AKS'
+      inputs:
+        azureSubscription: $(azureSubscription)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          # Pull the latest Nginx image from Docker Hub
+          docker pull $(dockerImage)
+
+          # Tag the Nginx image with the ACR repository name
+          docker tag $(dockerImage) $(acrName)/$(imageName):latest
+
+          # Push the image to ACR
+          docker push $(acrName)/$(imageName):latest
+
+          # Deploy to AKS using kubectl
+          kubectl apply -f $(deploymentFile)
+
+          # Wait for the deployment to complete
+          kubectl rollout status deployment/nginx0-deployment

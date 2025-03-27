@@ -1,0 +1,16 @@
+# Docker - pull image, tag, and push to AC
+Start Docker desktop
+az login
+az acr login --name <ACR-NAME>
+docker pull nginx
+docker tag nginx <ACR-NAME>.azurecr.io/samples/nginx
+docker push <ACR-NAME>.azurecr.io/samples/nginx
+
+# Create secret (get info from CR > settings > access keys)
+kubectl create secret docker-registry acr-auth --docker-server=ACRNAME.azurecr.io --docker-username=USERNAME --docker-password=<PASSWORD>
+
+# deploy acr-helloworld.yaml (until pipeline is set up)
+kubectl apply -f documentation/acr.helloworld.yaml
+
+# test
+in Lens select the pod and port forward to browser
