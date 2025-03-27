@@ -36,10 +36,35 @@ output "kube_config" {
 
 # Azure Container Registry
 resource "azurerm_container_registry" "cr-1" {
-  name                = "AKSCR1mmoore"
+  name                = "akscr1mmoore"
   resource_group_name = var.rg_name
   location            = var.rg_loc
   sku                 = "Premium"
 }
 
+# Kubernetes provider configuration to interact with the AKS cluster
+provider "kubernetes" {
+  host                   = azurerm_kubernetes_cluster.aks-cluster-1.kube_config[0].host
+  cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.aks-cluster-1.kube_config[0].cluster_ca_certificate)
+  client_certificate     = base64decode(azurerm_kubernetes_cluster.aks-cluster-1.kube_config[0].client_certificate)
+  client_key             = base64decode(azurerm_kubernetes_cluster.aks-cluster-1.kube_config[0].client_key)
+}
 
+resource "kubernetes_service" "nginx_service" {
+  metadata {
+    name = "nginx-service"
+  }
+
+  spec {
+    selector = {
+      app = "nginx" # Ensure the Nginx pod has this label
+    }
+
+    port {
+      port        = 80
+      target_port = 80
+    }
+
+    type = "LoadBalancer"
+  }
+}

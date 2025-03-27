@@ -19,6 +19,6 @@ spec:
         - name: acr-auth   # Reference the secret here, outside of containers
       containers:
       - name: nginx
-        image: AKSCR1mmoore.azurecr.io/samples/nginx:latest
+        image: akscr1mmoore.azurecr.io/samples/nginx:latest
         ports:
         - containerPort: 80
